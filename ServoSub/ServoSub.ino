@@ -2,7 +2,7 @@
 // led attached at 13 pin.
 
 #include <ros.h>
-#include <std_msgs/String.h>
+#include <std_msgs/Byte.h>
 #include <std_msgs/Empty.h>
 #include <Servo.h>
 
@@ -12,25 +12,30 @@ namespace CameraTools
 class Servocontrol
 {
   public:
-    Servocontrol(int servoX, int servoY): sub("/Servocontrol", &CameraTools::messageCallback,this){
+    Servocontrol(): sub("/Servocontrol", &CameraTools::Servocontrol::messageCallback,this){
         pos = 0;
-        XServo.attach(servoX);
-        YServo.attach(servoY);
         nh_.initNode();
         nh_.subscribe(sub);
+    }
+    
+    void startUp(int servoX, int servoY){
+        XServo.attach(servoX);
+        YServo.attach(servoY);
+        XServo.write(90);
+        YServo.write(0);
     }
 
     void listening(){
       nh_.spinOnce();
     }
 
-    void messageCallback( const std_msgs::String &msg){
+    void messageCallback( const std_msgs::Byte &msg){
       digitalWrite(13, HIGH);
-      for (pos = 0; pos <= 360; pos++){
+      for (pos = 0; pos <= 180; pos++){
         XServo.write(pos);
         delay(15);
       }
-        for (pos = 360; pos > 0; pos--){
+        for (pos = 180; pos > 0; pos--){
         XServo.write(pos);
         delay(15);
       }
@@ -39,19 +44,22 @@ class Servocontrol
 
   private:
     ros::NodeHandle nh_;
-    ros::Subscriber <std_msgs::String,CameraTools::Servocontrol> sub;
-    //ros::Subscriber <std_msgs::String> sub;
+    ros::Subscriber <std_msgs::Byte,CameraTools::Servocontrol> sub;
     Servo XServo;
     Servo YServo;
     int pos;
 };
 }
-  CameraTools::Servocontrol controller(9,10);
+
+CameraTools::Servocontrol controller;
 
 void setup()
 {
-;
+  Serial.begin(57600);
   pinMode(13, OUTPUT);
+  pinMode(9,OUTPUT);
+  pinMode(10,OUTPUT);
+  controller.startUp(9,10);
 }
 
 void loop()

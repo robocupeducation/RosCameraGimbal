@@ -3,7 +3,7 @@
 
 #include <ros.h>
 #include <std_msgs/Byte.h>
-#include <std_msgs/Empty.h>
+#include <std_msgs/UInt8.h>
 #include <Servo.h>
 
 
@@ -28,23 +28,32 @@ class Servocontrol
     void listening(){
       nh_.spinOnce();
     }
-
-    void messageCallback( const std_msgs::Byte &msg){
-      digitalWrite(13, HIGH);
-      for (pos = 0; pos <= 180; pos++){
-        XServo.write(pos);
-        delay(15);
+    
+    void moveServo(Servo servo,const std_msgs::UInt8 &msg){
+      int grades = int(msg.data & 00111111);
+      // Turn Rigth
+      if(msg.data & 01000000 == 01000000){
+        servo.write(90 + grades);
       }
-        for (pos = 180; pos > 0; pos--){
-        XServo.write(pos);
-        delay(15);
+      // Turn Left
+      else{
+        servo.write(90 - grades);
+      }
+    }
+
+    void messageCallback( const std_msgs::UInt8 &msg){
+      digitalWrite(13, HIGH);
+      if (msg.data > 127){
+          moveServo(XServo,msg);
+      }else{
+          moveServo(YServo,msg);
       }
       digitalWrite(13, LOW);
     }
 
   private:
     ros::NodeHandle nh_;
-    ros::Subscriber <std_msgs::Byte,CameraTools::Servocontrol> sub;
+    ros::Subscriber <std_msgs::UInt8,CameraTools::Servocontrol> sub;
     Servo XServo;
     Servo YServo;
     int pos;

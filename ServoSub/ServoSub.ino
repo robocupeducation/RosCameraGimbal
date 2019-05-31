@@ -3,7 +3,7 @@
 
 #include <ros.h>
 #include <std_msgs/Byte.h>
-#include <std_msgs/UInt8.h>
+#include <std_msgs/UInt8MultiArray.h>
 #include <Servo.h>
 
 
@@ -29,19 +29,11 @@ class Servocontrol
       nh_.spinOnce();
     }
     
-    void moveServo(Servo servo,const std_msgs::UInt8 &msg){
-      int grades = int(msg.data & 00111111);
-      // Turn Rigth
-      if(msg.data & 01000000 == 01000000){
-        servo.write(90 + grades);
-      }
-      // Turn Left
-      else{
-        servo.write(90 - grades);
-      }
+    void moveServo(Servo servo,const std_msgs::UInt8MultiArray &msg){
+      servo.write(msg.data[1]);
     }
 
-    void messageCallback( const std_msgs::UInt8 &msg){
+    void messageCallback( const std_msgs::UInt8MultiArray &msg){
       digitalWrite(13, HIGH);
       if (msg.data > 127){
           moveServo(XServo,msg);
@@ -53,7 +45,7 @@ class Servocontrol
 
   private:
     ros::NodeHandle nh_;
-    ros::Subscriber <std_msgs::UInt8,CameraTools::Servocontrol> sub;
+    ros::Subscriber <std_msgs::UInt8MultiArray,CameraTools::Servocontrol> sub;
     Servo XServo;
     Servo YServo;
     int pos;
